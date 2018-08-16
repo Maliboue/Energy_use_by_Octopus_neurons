@@ -32,7 +32,9 @@ PARAMETER {
 	zeta2   = 3 	(/ms)		
 	a01 = 0.008 
 	a02 = 0.0029
-	frac= 0.8
+	frac= 0.8                       : That is from McGinley'12 paper. Spencer'12 uses
+                                	: frac=1, celsius=33 (no temp correction)
+                                  	: We use frac=0.8, celsius=37 (T=37)
 
 
 	thinf  = -66 	(mV)		: inact inf slope	

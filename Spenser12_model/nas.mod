@@ -64,8 +64,9 @@ PROCEDURE rates(v) {
     LOCAL hlp
     
     qt = 3^((celsius - 22)/10)
-    qt2 = 10^((celsius-33)/10)
-    : T corrections as in Rothman 1983:
+    :qt2 = 10^((celsius - 33)/10) : Oops... Mistake here: Rothman'93 has qt2=10^((cel-22)/10)
+    qt2 = 10^((celsius - 22)/10) : 23.07.16 corrected -> AP faster 
+    : T corrections as in Rothman 1993:
     
     minf = 1/(1-(1.11*(v+58)/(v+49))*(exp(-(v+49)/3)-1)/(exp((v+58)/20)-1))
     mtau = 1/(0.4*qt*((v+58)/(exp((v+58)/20)-1)) - 0.36*qt*((v+49)/(exp(-(v+49)/3)-1)))
@@ -74,17 +75,6 @@ PROCEDURE rates(v) {
     
     hinf = hlp/(hlp + 3.6*qt/(1+exp(-(v+21)/10)))
     htau = 1/(hlp + 3.6*qt/(1+exp(-(v+21)/10)))
-    
-    : Without qt2 corrections. qt multiplies derivatives
-    
-    :minf = 1/(1-(1.11*(v+58)/(v+49))*(exp(-(v+49)/3)-1)/(exp((v+58)/20)-1))
-    :mtau = 1/(0.4*((v+58)/(exp((v+58)/20)-1)) - 0.36*((v+49)/(exp(-(v+49)/3)-1)))
-    
-    :hlp = 2.4/(1+exp((v+68)/3)) + 0.8/(1+exp(v+61.3))
-    
-    :hinf = hlp/(hlp + 3.6/(1+exp(-(v+21)/10)))
-    :htau = 1/(hlp + 3.6/(1+exp(-(v+21)/10)))
-    
     
 }
 UNITSON
