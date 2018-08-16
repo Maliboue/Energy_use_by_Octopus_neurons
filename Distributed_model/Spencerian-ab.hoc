@@ -1,0 +1,261 @@
+// Morphology based on Spencer et al 2012 Front. comp. neurosci
+// Currents based on Rothman and Manis 2003, Bal and Oertel 2000, 2001
+
+
+// celsius = 33 // Does it matter where to set celsius, inside soma or not?
+
+
+Ndend = 4
+Ldend = 250
+
+create soma, ax_stub, ax_init, dendrites[Ndend]
+
+
+full_na = 1000e-9 //S
+
+// --- biophysics --- 
+soma {
+    diam = 25 // Spencer. RM-03 have 21, which is close. also, OC could be larger than BC
+    L = 25
+    nseg = 1
+    
+    insert kltab ek_kltab = -70 // following RM-03
+    insert khtab ek_khtab = -70 // after RM-03
+    insert hcno eh_hcno = -38   // taken from BO-00
+    insert ihsab eh_ihsab = -38   // as in Spencer
+    
+    
+    gbar_kltab = 0.0407 // mho/cm2, following Spencer12
+    gbar_khtab = 0.0061  // mho/cm2, ---------//--------
+    //gbar_hcno = 0.0076     // mho/cm2, ---------//--------
+    gbar_hcno = 0 // swit it off
+    gbar_ihsab = 0.0076 // following Spencer12
+    
+    insert nasab ena = 55 
+    gbar_nasab = 0.0 //no sodium current in soma
+    //gbar_nasab = full_na/(diam*L*3.1415*1e-8) // S/cm2
+
+
+    
+}
+
+
+// TODO: :geometry: Ususally, axons are much thinner than dendrites, not the case with
+// Spencer et al 2012 model
+
+ax_stub {
+    // Passive axon lead
+   diam = 3
+   L = 30
+   insert nasab ena = 55 gbar_nasab = 0.0
+}
+
+ax_init {
+    // Spike initiation zone
+   diam = 3
+   L = 10
+   insert nasab ena = 55 gbar_nasab = 4.244
+   //insert naab ena = 55 gbar_naab = 4.244
+}
+
+for i = 0, Ndend-1 dendrites[i] {
+    diam = 3
+    L = Ldend
+    nseg = 101
+    insert kltab ek_kltab = -70 
+    insert hcno eh_hcno = -38
+    insert ihsab eh_ihsab = -38   // as in Spencer
+    
+    //gbar_kltab = soma.gbar_kltab*0.1
+    gbar_hcno = soma.gbar_hcno*0.1
+    gbar_ihsab = soma.gbar_ihsab*0.1
+    gbar_kltab = 2.7e-3  // S/cm2 // Table 3 Spencer
+    gbar_ihsab = 0.6e-3 // S/cm2  // Table 3  Spencer
+
+}
+
+forall {
+    //Ra = 150 // RM-03, BO-00
+    Ra = 100  //Spencer
+    cm = 0.9 //Spencer
+    insert leak  // leak is from RM-03   
+    gbar_leak = 0.002 // S/cm2 Spencer12
+    erev_leak = -62
+    
+}
+
+// --- done with biophysics 
+
+// --- Connections --- 
+
+connect ax_init(0), ax_stub(1)
+connect ax_stub(0), soma(0)
+
+for i=0, Ndend-1 {
+    connect dendrites[i](0), soma(1) 
+}
+// --- done connections --- 
+
+
+
+
+
+
+// We have to access some segment, e.g. soma 
+access soma
+
+// --- Stimulation at soma level ---
+
+objectvar step_stim[2]
+objectvar train_stim[6]
+objectvar hyper_stim
+
+hyper_stim = new IClamp(0.5)
+
+soma step_stim[0] = new IClamp(0.5)
+soma step_stim[1] = new IClamp(0.5)
+
+for i=0,5 {
+    soma train_stim[i] = new IClamp(0.5)
+}
+
+proc set_pulse_train(){local amp, dur, period, start
+    amp = $1
+    dur = $2
+    period = $3
+    start = $4
+    for i = 0,5 {
+        train_stim[i].del = start + period*(i+1)
+        train_stim[i].amp = amp
+        train_stim[i].dur = dur
+    }
+}
+
+proc two_pulse_stim() {
+    
+    for i =0,1 {
+        step_stim[i].dur = 10
+        step_stim[i].amp = $1 // nA
+        step_stim[i].del = 50
+    }
+    step_stim[1].del = 50 + 10
+    step_stim[1].amp = 2*$1 //nA
+}
+
+
+proc hyperpol_stim() {
+    hyper_stim.amp = $1
+    hyper_stim.del = 100
+    hyper_stim.dur = 50
+} 
+
+proc do_tests(){
+    set_pulse_train(6, 0.5, 1000/780, 25)
+    two_pulse_stim(3)
+    hyperpol_stim(-15)
+    run()
+}
+
+// --------- Synaptic stimulation ------------------------- 
+
+objref afib // a dummy auditory fibre spike source
+afib = new NetStim(.5) // This will drive our dendritic stimulation 
+afib.interval = 2 // ms
+afib.start = 2500 // ms
+afib.number = 25 // number of spikes
+afib.noise = 0.1 // no randomness so far
+
+objref ncl  // a list of NetCon objects
+ncl = new List()
+
+synweight = 2e-3 // 2nS -> microsiemens
+
+Nsyn = 84
+
+objref synapses[Nsyn]
+
+fulldelay = 0.25 // estimated full delay at 37
+//fulldelay = 2.0 // estimated full delay at 37
+
+objref rx 
+rx = new Random()
+
+for i = 0,Nsyn-1 {
+    kd = i%Ndend
+    coord = int(i/Ndend)*(Ndend/Nsyn)
+    
+    delay = (1-coord)*fulldelay
+    //delay = rx.uniform(0,fulldelay)
+    
+    dendrites[kd] synapses[i] = new Exp2Syn(coord)    
+    synapses[i].tau1 = 70e-3   // rise time, ms
+    synapses[i].tau2 = 340e-3  // decay time, ms
+    ncl.append(new NetCon(afib, synapses[i], 0, delay, synweight)) 
+}
+
+
+
+//dendrites[0] syn1 = new Exp2Syn(0.001) // just at beginning
+//dendrites[0] syn1 = new Exp2Syn(0.999) // at end
+//syn1.tau1 = 70e-3 // rise tau, ms
+//syn1.tau2 = 340e-3 // decay tau, ms
+//ncl.append(new NetCon(afib, syn1, 0, 0, synweight))
+
+
+// -- end synaptic events
+
+
+
+// --- done stimulation ---
+
+
+celsius = 37
+
+// --- Numerics --- 
+//dt = 0.01
+tstop = 500
+v_init = -60.6
+cvode_active(1)
+cvode.atol(1e-4)
+
+// --- Graphs ---
+
+objref vg
+
+
+vg = new Graph()
+
+addplot(vg, 0)
+vg.size(0, tstop, -65, -0)
+vg.addvar("soma.v(0.5)", 1, 1, 0.6, 0.9, 2)
+vg.addvar("ax_init.v(0.5)", 2, 1, 0.6, 0.9, 2)
+vg.exec_menu("Keep Lines")
+
+// --- Running all this --- 
+
+run()
+
+
+//do_tests()
+
+//two_pulse_stim(3)
+//two_pulse_stim(5)
+
+
+
+// Resting currents // 
+
+//forsec "dendrite" print secname()
+// --- or use SectionList first!!!
+
+// dendrites[0] for (x) print ik_kltab(x)
+
+func summate_dend_klt(){ local isum
+    isum = 0
+    forsec $s1 {
+        print secname()
+        for (x) isum += ik_kltab(x)*diam*L/nseg
+    }
+    return isum*PI*1e-8
+}
+summate_dend_klt("soma") + summate_dend_klt("dend")
