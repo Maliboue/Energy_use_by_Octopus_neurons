@@ -40,6 +40,6 @@ The ‘Distributed model’ Jupyter notebook contains a class OctopusCell that a
  - Mouj11 — Moujahid et al., 2011, Energy and information in Hodgkin-Huxley neurons 
  - Sokol77 — Sokoloff et al., 1977, THE [14C]DEOXYGLUCOSE METHOD FOR THE MEASUREMENT OF LOCAL CEREBRAL GLUCOSE UTILIZATION: THEORY, PROCEDURE, AND NORMAL VALUES IN THE CONSCIOUS AND ANESTHETIZED ALBINO RAT
  - How12 — Howarth et al., 2012 — Updated energy budgets for neural computation in the neocortex and cerebellum 
- - Sp12 — An investigation of dendritic delay in octopus cells of the mammalian cochlear nucleus 
+ - Sp12 — Spencer et al., 2012 - An investigation of dendritic delay in octopus cells of the mammalian cochlear nucleus 
 
 
