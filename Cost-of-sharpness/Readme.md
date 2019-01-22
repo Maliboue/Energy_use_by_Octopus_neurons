@@ -1,5 +1,7 @@
 # Metabolic energy usage by mammalian auditory brainstem octopus cells
 
+This repository accompanies the paper accepted to the Journal of Theoretical Biology: Zhukov, Kazakova, Maksimov, Brazhe,  'Cost of Auditory Sharpness: Model-Based Estimate of Energy Use by Auditory Brainstem ``Octopus'' Neurons'
+
 This repository provides routines for simulation and metabolic energy usage assessment in Hodgkin-Huxley-type models of temporally-precise octopus-cells (OC) of the rodent auditory brainstem ventral cochlear nucleus.
 
 Two types of published models are implemented: 
