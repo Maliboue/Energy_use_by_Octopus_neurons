@@ -42,4 +42,8 @@ The ‘Distributed model’ Jupyter notebook contains a class OctopusCell that a
  - How12 — Howarth et al., 2012 -- Updated energy budgets for neural computation in the neocortex and cerebellum 
  - Sp12 — Spencer et al., 2012 -- An investigation of dendritic delay in octopus cells of the mammalian cochlear nucleus 
 
+# Acknowledgements
+
+This work was supported by Russian Fund for Basic Research [grant number 18-04-01175]
+
 
